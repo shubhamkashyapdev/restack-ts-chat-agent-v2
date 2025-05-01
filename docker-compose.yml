@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  restack:
+    image: ghcr.io/restackio/restack:main
+    container_name: restack
+    ports:
+      - "5233:5233"
+      - "6233:6233"
+      - "7233:7233"
+      - "9233:9233"
