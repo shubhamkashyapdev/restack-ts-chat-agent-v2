@@ -7,10 +7,10 @@ export const mockFlow = async (): Promise<ReactFlowJsonObject> => {
     return {
       nodes: [
         {
-          id: milestone.name,
+          id: "budget-assessment",
           type: "workflow",
           data: {
-            eventType: milestone.name,
+            eventType: "budget-assessment",
             workflowType: milestone.name,
             flowPrompt:
               "Ask about the client's budget range for this project and analyze if it matches our service tier. Determine if the budget is: high (>$50k), medium ($20k-$50k), or low (<$20k)",
@@ -27,7 +27,7 @@ export const mockFlow = async (): Promise<ReactFlowJsonObject> => {
           id: "high-budget",
           type: "workflow",
           data: {
-            eventType: milestone.name,
+            eventType: "high-budget",
             workflowType: milestone.name,
             flowPrompt:
               "For high budget clients (>$50k), discuss our enterprise-level services and comprehensive solutions. Ask about their specific requirements and timeline.",
@@ -40,7 +40,7 @@ export const mockFlow = async (): Promise<ReactFlowJsonObject> => {
           id: "medium-budget",
           type: "workflow",
           data: {
-            eventType: milestone.name,
+            eventType: "medium-budget",
             workflowType: milestone.name,
             flowPrompt:
               "For medium budget clients ($20k-$50k), present our professional service tier and discuss scalable solutions. Understand their core needs and priorities.",
@@ -53,7 +53,7 @@ export const mockFlow = async (): Promise<ReactFlowJsonObject> => {
           id: "low-budget",
           type: "workflow",
           data: {
-            eventType: milestone.name,
+            eventType: "low-budget",
             workflowType: milestone.name,
             flowPrompt:
               "For low budget clients (<$20k), explain our starter packages and basic service offerings. Focus on essential features and potential upgrade paths.",
@@ -77,19 +77,19 @@ export const mockFlow = async (): Promise<ReactFlowJsonObject> => {
           id: "edge-initial-high",
           source: "budget-assessment",
           target: "high-budget",
-          sourceHandle: "high",
+          sourceHandle: "high-budget",
         },
         {
           id: "edge-initial-medium",
           source: "budget-assessment",
           target: "medium-budget",
-          sourceHandle: "medium",
+          sourceHandle: "medium-budget",
         },
         {
           id: "edge-initial-low",
           source: "budget-assessment",
           target: "low-budget",
-          sourceHandle: "low",
+          sourceHandle: "low-budget",
         },
         {
           id: "edge-high-end",

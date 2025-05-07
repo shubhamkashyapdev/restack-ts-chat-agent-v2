@@ -10,7 +10,7 @@ import {
   agentInfo,
   sleep,
 } from "@restackio/ai/agent";
-import { nextEvent, getFlow } from "@restackio/ai/flow";
+import { nextEvent } from "@restackio/ai/flow";
 import { Workflow } from "@temporalio/workflow";
 import * as flowFunctions from "@restackio/ai/flow";
 import * as functions from "../functions";
@@ -41,6 +41,15 @@ export type AgentFlowOutput = {
     response: any;
   }[];
 };
+
+/**
+ * Gets a flow from the flowMap by its eventName (node id)
+ * This allows multiple nodes to use the same workflowType while having different eventNames
+ */
+function getFlowByEventName(flowMap: any[], eventName: string) {
+  return flowMap.find((flow) => flow.eventName === eventName);
+}
+
 export async function agentFlow({
   flowJson,
 }: AgentFlowInput): Promise<AgentFlowOutput> {
@@ -49,7 +58,6 @@ export async function agentFlow({
   try {
     if (!flowJson) {
       // Mock React Flow JSON to debug with frontend
-
       flowJson = await step<typeof functions>({}).mockFlow();
     }
 
@@ -61,7 +69,7 @@ export async function agentFlow({
       log.info(`Received event: ${name}`);
       log.info(`Received event data: ${input}`);
       console.log({ name, input });
-      const flow = getFlow({ flowMap, name });
+      const flow = getFlowByEventName(flowMap, name);
 
       if (!flow) {
         throw new AgentError(`No workflow found for event: ${name}`);

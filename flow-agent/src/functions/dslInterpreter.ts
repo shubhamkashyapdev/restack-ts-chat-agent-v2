@@ -24,7 +24,9 @@ export type DSLInterpreterOutput = {
   }[];
 };
 
-export async function dslInterpreter({reactflowJson}: DSLInterpreterInput): Promise<DSLInterpreterOutput> {
+export async function dslInterpreter({
+  reactflowJson,
+}: DSLInterpreterInput): Promise<DSLInterpreterOutput> {
   const { nodes, edges } = parseReactFlowJson(reactflowJson);
 
   const flowMap = nodes.map((node: any) => {
@@ -36,7 +38,7 @@ export async function dslInterpreter({reactflowJson}: DSLInterpreterInput): Prom
 
     return {
       eventName: node.id,
-      workflowType: node.id,
+      workflowType: node.data.workflowType || node.data.eventType,
       flowPrompt: node.data.flowPrompt,
       flowOutputConditions: node.data.flowOutputConditions,
       edgeConditions,
