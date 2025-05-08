@@ -41,32 +41,71 @@ export const milestone = async ({
       throw new Error("System prompt is required");
     }
 
-    // generate a response
-    const simulatedResponse = `I understand your message: "${message}". How can I help you further?`;
-
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o",
+    // First, generate a response to the user's message
+    const responseCompletion = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [
         { role: "system", content: context.systemPrompt },
         { role: "user", content: `message: ${message}` },
       ],
     });
-    const responseMessage = res.choices[0].message.content;
+    const responseMessage = responseCompletion.choices[0].message.content || "";
 
-    const msg = responseMessage || simulatedResponse;
-    // @todo: identify the next step
+    // Then, classify the response into one of the output conditions
+    let classification = "no-event"; // Default fallback
+    let confidence = 0;
 
-    const classification = context.outputConditions?.[0] || undefined;
+    if (context.outputConditions && context.outputConditions.length > 0) {
+      const classificationPrompt = `
+Based on the following conversation:
+User: ${message}
+Assistant: ${responseMessage}
+
+Classify this conversation into exactly ONE of the following categories:
+${context.outputConditions.join(", ")}
+
+If none of the categories fit perfectly, respond with "no-event".
+
+Respond with ONLY the category name, nothing else.`;
+
+      const classificationCompletion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a classifier. Respond only with the exact category name from the options provided. If no category fits, respond with 'no-event'.",
+          },
+          { role: "user", content: classificationPrompt },
+        ],
+        temperature: 0, // Use zero temperature for consistent classification
+      });
+
+      const predictedClass =
+        classificationCompletion.choices[0].message.content
+          ?.trim()
+          .toLowerCase() || "no-event";
+
+      // Check if the predicted class is in our valid conditions
+      if (
+        context.outputConditions
+          .map((c) => c.toLowerCase())
+          .includes(predictedClass)
+      ) {
+        classification = predictedClass;
+        confidence = 1.0;
+      }
+    }
 
     const output: MilestoneOutput = {
-      response: msg,
+      response: responseMessage,
       classification,
-      confidence: 1.0,
+      confidence,
       metadata: {
         status: "success",
         timestamp: new Date().toISOString(),
         messageTokens: message.length,
-        totalTokens: msg.length + message.length,
+        totalTokens: responseMessage.length + message.length,
         matchedCondition: classification,
       },
     };

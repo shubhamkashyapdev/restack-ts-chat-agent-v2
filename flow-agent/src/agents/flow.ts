@@ -10,7 +10,6 @@ import {
   agentInfo,
   sleep,
 } from "@restackio/ai/agent";
-import { nextEvent } from "@restackio/ai/flow";
 import { Workflow } from "@temporalio/workflow";
 import * as flowFunctions from "@restackio/ai/flow";
 import * as functions from "../functions";
@@ -48,6 +47,61 @@ export type AgentFlowOutput = {
  */
 function getFlowByEventName(flowMap: any[], eventName: string) {
   return flowMap.find((flow) => flow.eventName === eventName);
+}
+
+/**
+ * Determines the next event in the flow based on the current flow and child output
+ */
+function nextEvent({
+  flow,
+  childOutput,
+}: {
+  flow: {
+    eventName: string;
+    workflowType: string;
+    flowPrompt: string;
+    flowOutputConditions: string[];
+    edgeConditions: { targetNodeId: string; condition: string }[];
+  };
+  childOutput: any;
+}) {
+  // If there's no response or it's the end flow, return null
+  if (!childOutput?.response || flow.workflowType === "endFlow") {
+    console.log("No response or end flow reached");
+    return null;
+  }
+
+  console.log("Flow output conditions:", flow.flowOutputConditions);
+  console.log("Child output response:", childOutput.response);
+  console.log("Child output raw:", childOutput.rawResponse);
+  console.log("Edge conditions:", flow.edgeConditions);
+
+  // Get the classification from rawResponse
+  const classification = childOutput.rawResponse?.classification;
+  console.log("Classification:", classification);
+
+  if (!classification || classification === "no-event") {
+    console.log("No valid classification found or no-event received");
+    return null;
+  }
+
+  // Find the matching edge based on the classification
+  const matchingEdge = flow.edgeConditions.find(
+    (edge) =>
+      edge.condition === classification || edge.targetNodeId === classification
+  );
+
+  console.log("Matching edge:", matchingEdge);
+
+  if (!matchingEdge) {
+    console.log("No matching edge found");
+    return null;
+  }
+
+  // Return the next event information
+  return {
+    eventName: matchingEdge.targetNodeId,
+  };
 }
 
 export async function agentFlow({
@@ -98,8 +152,8 @@ export async function agentFlow({
 
       console.log(childOutput);
 
-      // const nextFlowEvent = nextEvent({ flow, childOutput });
-      // console.log({ nextFlowEvent });
+      const nextFlowEvent = nextEvent({ flow, childOutput });
+      console.log({ nextFlowEvent });
       // if (nextFlowEvent) {
       //   await sleep(1000);
       //   step<typeof functions>({}).sendAgentEvent({
@@ -115,7 +169,7 @@ export async function agentFlow({
 
       return {
         ...childOutput,
-        // nextEvent: nextFlowEvent?.eventName,
+        nextEvent: nextFlowEvent?.eventName,
       };
     });
 
